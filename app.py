@@ -91,27 +91,71 @@ st.markdown(
 st.set_page_config(page_title="PDF to Image Converter", layout="wide")
 
 # HEADER
-display_title = '<div class="header">📄 PDF to Image Converter</div>'
-st.markdown(display_title, unsafe_allow_html=True)
+st.markdown('<div class="header">📄 PDF to Image Converter</div>', unsafe_allow_html=True)
+
+# Authentication
+if "authorized" not in st.session_state:
+    st.session_state.authorized = False
+    st.session_state.user_greeting = ""
+
+if not st.session_state.authorized:
+    code_input = st.text_input("Please enter last 3 digits of your employee ID to access", max_chars=3)
+
+    if code_input in VALID_CODES:
+        st.session_state.authorized = True
+        st.session_state.user_greeting = VALID_CODES[code_input]
+        st.experimental_rerun()
+    elif code_input != "":
+        st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
+else:
+    st.success(st.session_state.user_greeting)
+
+    # SIDEBAR
+    with st.sidebar:
+        st.markdown('<div class="sidebar">', unsafe_allow_html=True)
+
+        pdf_file = st.file_uploader("Upload PDF file", type=["pdf"])
+
+        if pdf_file is not None:
+            doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+            total_pages = doc.page_count
+
+            col1, col2 = st.columns(2)
+            with col1:
+                start_page = st.number_input("Start page", min_value=1, max_value=total_pages, value=1)
+            with col2:
+                end_page = st.number_input("End page", min_value=1, max_value=total_pages, value=total_pages)
+
+            output_format = st.selectbox("Output image format", ["PNG", "JPEG"])
+
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            start_page = end_page = output_format = None
+
+    # MAIN CONTENT
+    if pdf_file is not None and start_page <= end_page:
+        main_app(doc, pdf_file.name)
+    elif pdf_file is not None:
+        st.error("❌ Start page must be less or equal to End page")
 
 def main_app(doc, pdf_name):
     total_pages = doc.page_count
 
     col1, col2 = st.columns(2)
     with col1:
-        start_page = st.number_input("Start page", min_value=1, max_value=total_pages, value=1)
+        start_page = st.number_input("Start page", min_value=1, max_value=total_pages, value=1, key="start_page_main")
     with col2:
-        end_page = st.number_input("End page", min_value=1, max_value=total_pages, value=total_pages)
+        end_page = st.number_input("End page", min_value=1, max_value=total_pages, value=total_pages, key="end_page_main")
 
     if start_page > end_page:
         st.error("❌ Start page must be less or equal to End page")
         return
 
-    output_format = st.selectbox("Select output image format", ["PNG", "JPEG"])
-    quality = st.radio("Select image quality (DPI)", ["Normal (300)", "HighQ (600)"])
+    output_format = st.selectbox("Select output image format", ["PNG", "JPEG"], key="output_format_main")
+    quality = st.radio("Select image quality (DPI)", ["Normal (300)", "HighQ (600)"], key="quality_main")
     dpi = 300 if "300" in quality else 600
 
-    conversion_format = st.selectbox("Convert PDF to other format", ["None", "PPTX"])
+    conversion_format = st.selectbox("Convert PDF to other format", ["None", "PPTX"], key="conversion_format_main")
     if conversion_format == "PPTX":
         pptx_file = convert_pdf_to_pptx(doc)
         st.download_button("⬇️ Download PPTX", pptx_file, file_name="converted.pptx",
@@ -170,7 +214,7 @@ def main_app(doc, pdf_name):
 st.markdown(
     """
     <div class="footer">
-        Developed by FTC-Harper — © 2025
+        Developed by FTC-Harper  — © 2025
     </div>
     """,
     unsafe_allow_html=True,
