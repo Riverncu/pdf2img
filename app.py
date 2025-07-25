@@ -146,7 +146,7 @@ elif pdf_file is not None:
 st.markdown(
     """
     <div class="footer">
-        Developed by YourName — © 2025
+        Developed by FTC-Harper  — © 2025
     </div>
     """,
     unsafe_allow_html=True,
