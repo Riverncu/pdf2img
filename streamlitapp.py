@@ -28,33 +28,33 @@ if pdf_file is not None:
         output_format = st.selectbox("Select output image format", ["PNG", "JPEG"])
         progress_bar = st.progress(0)
 
-        # Nút download ZIP
+        cols = st.columns(3)  # 3 cột, chỉnh số cột tùy ý
+
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-
-            for i in range(start_page - 1, end_page):
+            for idx, i in enumerate(range(start_page - 1, end_page)):
                 page = doc.load_page(i)
                 pix = page.get_pixmap(dpi=300)
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
-                st.image(img, caption=f"📄 Page {i + 1}", use_container_width=True)
+                col = cols[idx % 3]
+                with col:
+                    st.image(img, caption=f"📄 Page {i + 1}", use_container_width=True)
 
-                img_buffer = BytesIO()
-                img.save(img_buffer, format=output_format)
-                img_bytes = img_buffer.getvalue()
+                    img_buffer = BytesIO()
+                    img.save(img_buffer, format=output_format)
+                    img_bytes = img_buffer.getvalue()
 
-                # Thêm file vào zip
+                    st.download_button(
+                        label=f"⬇️ Download Page {i + 1} as {output_format}",
+                        data=img_bytes,
+                        file_name=f"page_{i + 1}.{output_format.lower()}",
+                        mime=f"image/{output_format.lower()}",
+                    )
+
                 zip_file.writestr(f"page_{i + 1}.{output_format.lower()}", img_bytes)
 
-                # Tạo nút download cho từng trang
-                st.download_button(
-                    label=f"⬇️ Download Page {i + 1} as {output_format}",
-                    data=img_bytes,
-                    file_name=f"page_{i + 1}.{output_format.lower()}",
-                    mime=f"image/{output_format.lower()}",
-                )
-
-                progress_bar.progress((i - (start_page - 1) + 1) / (end_page - start_page + 1))
+                progress_bar.progress((idx + 1) / (end_page - start_page + 1))
 
         progress_bar.empty()
 
