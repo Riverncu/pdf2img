@@ -1,4 +1,18 @@
 import streamlit as st
+
+
+VALID_CODES = {"006", "319", "032"}
+
+st.title("📄 PDF to Image Converter")
+
+code_input = st.text_input("Please enter last 3 digits of your employee ID to access", max_chars=3)
+
+if code_input not in VALID_CODES:
+    st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
+    st.stop()
+
+
+
 import fitz
 from io import BytesIO
 from PIL import Image
