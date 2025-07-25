@@ -6,7 +6,6 @@ import zipfile
 from pptx import Presentation
 from pptx.util import Inches
 
-# Lấy VALID_CODES từ secrets
 VALID_CODES = st.secrets["employee_codes"]
 
 def convert_pdf_to_pptx(doc):
@@ -28,24 +27,7 @@ def convert_pdf_to_pptx(doc):
     pptx_io.seek(0)
     return pptx_io
 
-def main_app(doc, pdf_name):
-    total_pages = doc.page_count
-
-    col1, col2 = st.columns(2)
-    with col1:
-        start_page = st.number_input("Start page", min_value=1, max_value=total_pages, value=1, key="start_page_main")
-    with col2:
-        end_page = st.number_input("End page", min_value=1, max_value=total_pages, value=total_pages, key="end_page_main")
-
-    if start_page > end_page:
-        st.error("❌ Start page must be less or equal to End page")
-        return
-
-    output_format = st.selectbox("Select output image format", ["PNG", "JPEG"], key="output_format_main")
-    quality = st.radio("Select image quality (DPI)", ["Normal (300)", "HighQ (600)"], key="quality_main")
-    dpi = 300 if "300" in quality else 600
-
-    conversion_format = st.selectbox("Convert PDF to other format", ["None", "PPTX"], key="conversion_format_main")
+def render_preview_and_download(doc, pdf_name, start_page, end_page, output_format, dpi, conversion_format):
     if conversion_format == "PPTX":
         pptx_file = convert_pdf_to_pptx(doc)
         st.download_button("⬇️ Download PPTX", pptx_file, file_name="converted.pptx",
@@ -55,7 +37,6 @@ def main_app(doc, pdf_name):
     progress_bar = st.progress(0)
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-
         container = st.container()
         page_indices = range(start_page - 1, end_page)
         cols_per_row = 4
@@ -100,64 +81,62 @@ def main_app(doc, pdf_name):
         mime="application/zip",
     )
 
-# --- Custom CSS for nicer style ---
-st.markdown(
-    """
-    <style>
-    .header {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #0072ff, #00c6ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-    .sidebar .sidebar-content {
-        background-color: #e6f7ff;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 6px 15px rgb(0 198 255 / 0.3);
-        border: 1px solid #00aaff;
-    }
-    .footer {
-        font-size: 0.95rem;
-        color: #005073;
-        text-align: center;
-        padding: 25px;
-        margin-top: 60px;
-        border-top: 2px solid #00aaff;
-        background: #e0f7ff;
-        border-radius: 10px 10px 0 0;
-    }
-    div.stDownloadButton > button {
-        background-color: #0072ff;
-        color: white;
-        font-weight: 700;
-        border-radius: 12px;
-        padding: 10px 20px;
-        border: none;
-        box-shadow: 0 4px 8px rgb(0 114 255 / 0.6);
-        transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    div.stDownloadButton > button:hover {
-        background-color: #0057cc;
-        box-shadow: 0 6px 14px rgb(0 87 204 / 0.8);
-    }
-    .stImage > img {
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgb(0 114 255 / 0.3);
-        margin-bottom: 8px;
-    }
-    </style>
-    """, unsafe_allow_html=True
-)
+
+# --- Custom CSS ---
+st.markdown("""
+<style>
+.header {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #0072ff, #00c6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 30px;
+    text-align: center;
+}
+.sidebar .sidebar-content {
+    background-color: #e6f7ff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgb(0 198 255 / 0.3);
+    border: 1px solid #00aaff;
+}
+.footer {
+    font-size: 0.95rem;
+    color: #005073;
+    text-align: center;
+    padding: 25px;
+    margin-top: 60px;
+    border-top: 2px solid #00aaff;
+    background: #e0f7ff;
+    border-radius: 10px 10px 0 0;
+}
+div.stDownloadButton > button {
+    background-color: #0072ff;
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 10px 20px;
+    border: none;
+    box-shadow: 0 4px 8px rgb(0 114 255 / 0.6);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+div.stDownloadButton > button:hover {
+    background-color: #0057cc;
+    box-shadow: 0 6px 14px rgb(0 87 204 / 0.8);
+}
+.stImage > img {
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgb(0 114 255 / 0.3);
+    margin-bottom: 8px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.set_page_config(page_title="PDF to Image Converter", layout="wide")
 
 st.markdown('<div class="header">📄 PDF to Image Converter</div>', unsafe_allow_html=True)
 
-# Authentication
 if "authorized" not in st.session_state:
     st.session_state.authorized = False
     st.session_state.user_greeting = ""
@@ -168,7 +147,7 @@ if not st.session_state.authorized:
     if code_input in VALID_CODES:
         st.session_state.authorized = True
         st.session_state.user_greeting = VALID_CODES[code_input]
-        st.rerun()
+        st.experimental_rerun()
     elif code_input != "":
         st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
 
@@ -177,14 +156,32 @@ else:
 
     with st.sidebar:
         st.markdown('<div class="sidebar">', unsafe_allow_html=True)
-
         pdf_file = st.file_uploader("Upload PDF file", type=["pdf"])
-
         if pdf_file is not None:
             doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-            # Đưa phần chọn trang, format vào sidebar luôn
-            main_app(doc, pdf_file.name)
+            total_pages = doc.page_count
+
+            start_page = st.number_input("Start page", min_value=1, max_value=total_pages, value=1)
+            end_page = st.number_input("End page", min_value=1, max_value=total_pages, value=total_pages)
+            output_format = st.selectbox("Select output image format", ["PNG", "JPEG"])
+            quality = st.radio("Select image quality (DPI)", ["Normal (300)", "HighQ (600)"])
+            conversion_format = st.selectbox("Convert PDF to other format", ["None", "PPTX"])
+        else:
+            start_page = end_page = output_format = quality = conversion_format = None
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Không hiển thị main_app ở đây nữa vì đã gọi trong sidebar
+    # Ở main area hiện preview và download khi đã có file và các lựa chọn hợp lệ
+    if pdf_file is not None and start_page is not None and end_page is not None and output_format is not None and quality is not None and conversion_format is not None:
+        if start_page <= end_page:
+            dpi = 300 if "300" in quality else 600
+            render_preview_and_download(doc, pdf_file.name, start_page, end_page, output_format, dpi, conversion_format)
+        else:
+            st.error("❌ Start page must be less or equal to End page")
+
+    # Footer
+    st.markdown("""
+    <div class="footer">
+        Developed by FTC-Harper  — © 2025
+    </div>
+    """, unsafe_allow_html=True)
