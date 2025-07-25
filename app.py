@@ -79,45 +79,60 @@ def main_app(doc, pdf_name):
 st.markdown(
     """
     <style>
-    /* Header */
+    /* Header với gradient màu xanh dương */
     .header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #0a66c2;
-        margin-bottom: 20px;
-    }
-    /* Sidebar */
-    .sidebar .sidebar-content {
-        background-color: #f5f7fa;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
-    }
-    /* Footer */
-    .footer {
-        font-size: 0.9rem;
-        color: #888;
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #0072ff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 30px;
         text-align: center;
-        padding: 20px;
-        margin-top: 50px;
-        border-top: 1px solid #ddd;
     }
-    /* Download button style */
+    /* Sidebar với nền xanh nhẹ, border và shadow */
+    .sidebar .sidebar-content {
+        background-color: #e6f7ff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgb(0 198 255 / 0.3);
+        border: 1px solid #00aaff;
+    }
+    /* Footer nhẹ nhàng với màu xanh nhạt */
+    .footer {
+        font-size: 0.95rem;
+        color: #005073;
+        text-align: center;
+        padding: 25px;
+        margin-top: 60px;
+        border-top: 2px solid #00aaff;
+        background: #e0f7ff;
+        border-radius: 10px 10px 0 0;
+    }
+    /* Nút download màu xanh đậm, bo góc to hơn */
     div.stDownloadButton > button {
-        background-color: #0a66c2;
+        background-color: #0072ff;
         color: white;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 8px 16px;
+        font-weight: 700;
+        border-radius: 12px;
+        padding: 10px 20px;
         border: none;
-        transition: background-color 0.3s ease;
+        box-shadow: 0 4px 8px rgb(0 114 255 / 0.6);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
     div.stDownloadButton > button:hover {
-        background-color: #004182;
+        background-color: #0057cc;
+        box-shadow: 0 6px 14px rgb(0 87 204 / 0.8);
+    }
+    /* Thêm bóng nhẹ và viền cho ảnh preview */
+    .stImage > img {
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgb(0 114 255 / 0.3);
+        margin-bottom: 8px;
     }
     </style>
     """, unsafe_allow_html=True
 )
+
 
 # Set wide page config
 st.set_page_config(page_title="PDF to Image Converter", layout="wide")
