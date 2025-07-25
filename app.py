@@ -4,12 +4,8 @@ from io import BytesIO
 from PIL import Image
 import zipfile
 
-# Map mã nhân viên -> lời chào
-VALID_CODES = {
-    "006": "Welcome Harper",
-    "319": "Welcome Dave",
-    "032": "Welcome Otis",
-}
+# Lấy VALID_CODES từ secrets
+VALID_CODES = st.secrets["employee_codes"]
 
 def main_app(doc, pdf_name):
     total_pages = doc.page_count
