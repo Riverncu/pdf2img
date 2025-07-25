@@ -117,7 +117,7 @@ if not st.session_state.authorized:
     if code_input in VALID_CODES:
         st.session_state.authorized = True
         st.session_state.user_greeting = VALID_CODES[code_input]
-        st.experimental_rerun()
+        st.rerun()
     elif code_input != "":
         st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
 else:
