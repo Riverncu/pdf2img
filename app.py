@@ -5,7 +5,6 @@ from PIL import Image
 import zipfile
 from pptx import Presentation
 from pptx.util import Inches
-import os
 
 # Lấy VALID_CODES từ secrets
 VALID_CODES = st.secrets["employee_codes"]
@@ -105,7 +104,6 @@ def main_app(doc, pdf_name):
 st.markdown(
     """
     <style>
-    /* Header với gradient màu xanh dương */
     .header {
         font-size: 2.8rem;
         font-weight: 800;
@@ -115,7 +113,6 @@ st.markdown(
         margin-bottom: 30px;
         text-align: center;
     }
-    /* Sidebar với nền xanh nhẹ, border và shadow */
     .sidebar .sidebar-content {
         background-color: #e6f7ff;
         padding: 25px;
@@ -123,7 +120,6 @@ st.markdown(
         box-shadow: 0 6px 15px rgb(0 198 255 / 0.3);
         border: 1px solid #00aaff;
     }
-    /* Footer nhẹ nhàng với màu xanh nhạt */
     .footer {
         font-size: 0.95rem;
         color: #005073;
@@ -134,7 +130,6 @@ st.markdown(
         background: #e0f7ff;
         border-radius: 10px 10px 0 0;
     }
-    /* Nút download màu xanh đậm, bo góc to hơn */
     div.stDownloadButton > button {
         background-color: #0072ff;
         color: white;
@@ -149,7 +144,6 @@ st.markdown(
         background-color: #0057cc;
         box-shadow: 0 6px 14px rgb(0 87 204 / 0.8);
     }
-    /* Thêm bóng nhẹ và viền cho ảnh preview */
     .stImage > img {
         border-radius: 10px;
         box-shadow: 0 5px 15px rgb(0 114 255 / 0.3);
@@ -159,10 +153,8 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# Set wide page config
 st.set_page_config(page_title="PDF to Image Converter", layout="wide")
 
-# HEADER
 st.markdown('<div class="header">📄 PDF to Image Converter</div>', unsafe_allow_html=True)
 
 # Authentication
@@ -176,24 +168,23 @@ if not st.session_state.authorized:
     if code_input in VALID_CODES:
         st.session_state.authorized = True
         st.session_state.user_greeting = VALID_CODES[code_input]
-        st.experimental_rerun()
+        st.rerun()
     elif code_input != "":
         st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
+
 else:
     st.success(st.session_state.user_greeting)
 
-    pdf_file = st.file_uploader("Upload PDF file", type=["pdf"])
+    with st.sidebar:
+        st.markdown('<div class="sidebar">', unsafe_allow_html=True)
 
-    if pdf_file is not None:
-        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        main_app(doc, pdf_file.name)
+        pdf_file = st.file_uploader("Upload PDF file", type=["pdf"])
 
-# FOOTER
-st.markdown(
-    """
-    <div class="footer">
-        Developed by FTC-Harper  — © 2025
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        if pdf_file is not None:
+            doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+            # Đưa phần chọn trang, format vào sidebar luôn
+            main_app(doc, pdf_file.name)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Không hiển thị main_app ở đây nữa vì đã gọi trong sidebar
