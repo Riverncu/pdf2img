@@ -5,11 +5,9 @@ from PIL import Image
 import zipfile
 from pptx import Presentation
 from pptx.util import Inches
-import tempfile
 import os
 
-st.set_page_config(page_title="PDF to Image Converter", layout="wide")
-
+# Lấy VALID_CODES từ secrets
 VALID_CODES = st.secrets["employee_codes"]
 
 def convert_pdf_to_pptx(doc):
@@ -20,20 +18,81 @@ def convert_pdf_to_pptx(doc):
         page = doc.load_page(i)
         pix = page.get_pixmap(dpi=150)
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        img_path = f"/tmp/page_{i + 1}.png"
+        img.save(img_path)
 
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-            img.save(tmp_file.name)
-            slide = prs.slides.add_slide(blank_slide_layout)
-            slide.shapes.add_picture(tmp_file.name, Inches(0), Inches(0), width=Inches(10), height=Inches(7.5))
-            os.unlink(tmp_file.name)
+        slide = prs.slides.add_slide(blank_slide_layout)
+        slide.shapes.add_picture(img_path, Inches(0), Inches(0), width=Inches(10), height=Inches(7.5))
 
     pptx_io = BytesIO()
     prs.save(pptx_io)
     pptx_io.seek(0)
     return pptx_io
 
-# Custom CSS ...
-st.markdown("""<style> /*...*/ </style>""", unsafe_allow_html=True)
+# --- Custom CSS for nicer style ---
+st.markdown(
+    """
+    <style>
+    /* Header với gradient màu xanh dương */
+    .header {
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #0072ff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    /* Sidebar với nền xanh nhẹ, border và shadow */
+    .sidebar .sidebar-content {
+        background-color: #e6f7ff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgb(0 198 255 / 0.3);
+        border: 1px solid #00aaff;
+    }
+    /* Footer nhẹ nhàng với màu xanh nhạt */
+    .footer {
+        font-size: 0.95rem;
+        color: #005073;
+        text-align: center;
+        padding: 25px;
+        margin-top: 60px;
+        border-top: 2px solid #00aaff;
+        background: #e0f7ff;
+        border-radius: 10px 10px 0 0;
+    }
+    /* Nút download màu xanh đậm, bo góc to hơn */
+    div.stDownloadButton > button {
+        background-color: #0072ff;
+        color: white;
+        font-weight: 700;
+        border-radius: 12px;
+        padding: 10px 20px;
+        border: none;
+        box-shadow: 0 4px 8px rgb(0 114 255 / 0.6);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #0057cc;
+        box-shadow: 0 6px 14px rgb(0 87 204 / 0.8);
+    }
+    /* Thêm bóng nhẹ và viền cho ảnh preview */
+    .stImage > img {
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgb(0 114 255 / 0.3);
+        margin-bottom: 8px;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+# Set wide page config
+st.set_page_config(page_title="PDF to Image Converter", layout="wide")
+
+# HEADER
+display_title = '<div class="header">📄 PDF to Image Converter</div>'
+st.markdown(display_title, unsafe_allow_html=True)
 
 def main_app(doc, pdf_name):
     total_pages = doc.page_count
@@ -62,6 +121,7 @@ def main_app(doc, pdf_name):
     progress_bar = st.progress(0)
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+
         container = st.container()
         page_indices = range(start_page - 1, end_page)
         cols_per_row = 4
@@ -106,28 +166,12 @@ def main_app(doc, pdf_name):
         mime="application/zip",
     )
 
-# AUTH
-if "authorized" not in st.session_state:
-    st.session_state.authorized = False
-    st.session_state.user_greeting = ""
-
-if not st.session_state.authorized:
-    code_input = st.text_input("Please enter last 3 digits of your employee ID to access", max_chars=3)
-
-    if code_input in VALID_CODES:
-        st.session_state.authorized = True
-        st.session_state.user_greeting = VALID_CODES[code_input]
-        st.rerun()
-    elif code_input != "":
-        st.warning("⚠️ You are not authorized to use this app. Please enter valid employee code.")
-else:
-    st.success(st.session_state.user_greeting)
-
-    with st.sidebar:
-        st.markdown('<div class="sidebar">', unsafe_allow_html=True)
-        pdf_file = st.file_uploader("Upload PDF file", type=["pdf"])
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    if pdf_file is not None:
-        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        main_app(doc, pdf_file.name)
+# FOOTER
+st.markdown(
+    """
+    <div class="footer">
+        Developed by FTC-Harper — © 2025
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
